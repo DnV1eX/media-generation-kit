@@ -1629,6 +1629,8 @@ struct MediaGenerationKitCLIRunner {
     }
     let generationPipeline = pipeline
     let generationInputs = inputs
+    let estimatedComputeUnits =
+      useCloudCompute ? try generationPipeline.estimatedComputeUnits(inputs: generationInputs) : nil
 
     let resolvedConfigurationPayload = resolvedConfiguration(
       prompt: effectivePrompt,
@@ -1647,6 +1649,10 @@ struct MediaGenerationKitCLIRunner {
         textLog("Resolved configuration:")
         textLog(pretty)
       }
+    }
+
+    if let estimatedComputeUnits {
+      textLog("Current request compute units: \(estimatedComputeUnits.formatted())")
     }
 
     var manifestPath: String?
