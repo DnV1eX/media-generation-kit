@@ -455,11 +455,11 @@ struct MediaGenerationKitCLIRunner {
   var promptFile: String? = nil
   var negativePrompt: String = ""
   var model: String = "flux_2_klein_4b_q8p.ckpt"
-  var steps: Int = 4
+  var steps: Int? = nil
   var seed: UInt32 = 0
   var width: Int = 1024
   var height: Int = 1024
-  var guidanceScale: Float = 4
+  var guidanceScale: Float? = nil
   var output: String = "output.png"
   var moodboard: [String] = []
   var json: Bool = false
@@ -1559,7 +1559,7 @@ struct MediaGenerationKitCLIRunner {
       throw MediaGenerationKitCLIExecutionError.invalidArgument(
         "--width and --height must be positive multiples of 64.")
     }
-    guard steps > 0 else {
+    if let steps, steps <= 0 {
       throw MediaGenerationKitCLIExecutionError.invalidArgument("--num-inference-steps must be > 0.")
     }
     let effectiveStrength = inputStrength ?? (inputImagePath != nil ? 1.0 : nil)
@@ -1612,8 +1612,12 @@ struct MediaGenerationKitCLIRunner {
     pipeline.configuration.width = width
     pipeline.configuration.height = height
     pipeline.configuration.seed = seed
-    pipeline.configuration.steps = steps
-    pipeline.configuration.guidanceScale = guidanceScale
+    if let steps {
+      pipeline.configuration.steps = steps
+    }
+    if let guidanceScale {
+      pipeline.configuration.guidanceScale = guidanceScale
+    }
     if let effectiveStrength {
       pipeline.configuration.strength = effectiveStrength
     }
@@ -2054,8 +2058,11 @@ struct MediaGenerationKitCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "The model file name to use.")
     var model: String = "flux_2_klein_4b_q8p.ckpt"
 
-    @Option(name: .customLong("num-inference-steps"), help: "Number of inference steps.")
-    var steps: Int = 4
+    @Option(
+      name: .customLong("num-inference-steps"),
+      help: "Number of inference steps. Uses the model recommended value when omitted."
+    )
+    var steps: Int?
 
     @Option(
       name: [.customShort("S"), .long],
@@ -2069,8 +2076,11 @@ struct MediaGenerationKitCLI: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Image height in pixels (must be multiple of 64).")
     var height: Int = 1024
 
-    @Option(name: .shortAndLong, help: "Guidance scale for classifier-free guidance.")
-    var guidanceScale: Float = 4
+    @Option(
+      name: .shortAndLong,
+      help: "Guidance scale for classifier-free guidance. Uses the model recommended value when omitted."
+    )
+    var guidanceScale: Float?
 
     @Option(name: .shortAndLong, help: "Output file path for the generated image.")
     var output: String = "output.png"
